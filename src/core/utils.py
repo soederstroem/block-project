@@ -3,13 +3,14 @@ import pygame
 pygame.font.init()
 fonts = {
     "regular": pygame.font.SysFont("malgungothic", 30),
+    "debug": pygame.font.SysFont("couriernew", 16)
 }
 
 class TextBox:
 
-    def __init__(self, content: str, font:pygame.font.Font=fonts["regular"], pos=pygame.math.Vector2(0,0)):
+    def __init__(self, content: str, font:str="regular", pos=pygame.math.Vector2(0,0)):
         self.content = content
-        self.font = font
+        self.font = fonts[font]
         self.pos = pos
         self.text = self.font.render(self.content, False, "black","white")
         self.rect = self.text.get_rect()

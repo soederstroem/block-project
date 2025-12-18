@@ -71,3 +71,6 @@ class Tile(pygame.sprite.Sprite):
 
     def update(self):
         self.rect.topleft = self.pos
+    
+    def on_collide(self):
+        pass

@@ -18,20 +18,22 @@ bkg = pygame.transform.scale(pygame.image.load(map.bkg), SCREEN_DIM)
 
 text = TextBox("Hello!")
 
+# print(pygame.font.get_fonts())
+
 while not done:
     
     keys = pygame.key.get_pressed()
     
     for event in pygame.event.get():
         if keys[pygame.K_ESCAPE]:
-            player.image.fill("black")
+            map.load(player)
         if event.type == pygame.QUIT:
             done = True
 
     entities.update(keys)
     tiles.update()
 
-    text.update(f"{player.state}, {player.velocity}, {player.pos}")
+    # text.update(f"{player.modules["PhysicsModule"].state}, {player.modules["PhysicsModule"].velocity}, {player.pos}")
     
     screen.fill("white")
     screen.blit(bkg,(0,0))
