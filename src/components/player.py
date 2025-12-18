@@ -18,7 +18,7 @@ class Player(Entity):
         self.debug_text = TextBox(font="debug",content="", pos=(0,0))
         self.rect.topleft = position
 
-        self.state = "airborne"
+        self.standing = False
         self.velocity = pygame.math.Vector2(0,0)
 
         self.collided = False
@@ -30,18 +30,16 @@ class Player(Entity):
         del self
 
     def set_pos(self, npos: pygame.math.Vector2):
-        self.rect = npos
+        self.rect.topleft = npos
 
     def update(self, keys):
         debug = ""
 
-        if self.state == "standing":
-            self.velocity.y = 0
-        else:
+        if not self.standing:
             self.velocity.y += GRAVITY
 
-        if keys[pygame.K_UP] and self.state == "standing":
-            self.velocity.y = -10
+        if keys[pygame.K_UP] and self.standing:
+            self.velocity.y = -T_VELOCITY
 
         if keys[pygame.K_LEFT]:
             self.velocity.x = -5
@@ -50,53 +48,62 @@ class Player(Entity):
         else:
             self.velocity.x = 0
         
-        if abs(self.velocity.y) < .01: self.velocity.y = 0
+        if self.standing and abs(self.velocity.y) < .01: self.velocity.y = 0
         self.velocity.y = min(self.velocity.y, T_VELOCITY)
         
-        self.rect.topleft += self.velocity
+        self.rect.x += self.velocity.x
+        self.rect.y += self.velocity.y
 
         self.handle_collision()
 
-        self.debug_text.update(f"Position: (POS:{self.rect.topleft}\nVelocity: {self.velocity}\nState: {self.state}\nModules: {list(self.modules.keys())}\nCollisions: {self.collisions}")
+        debug_content = [
+            f"Position: POS:{self.rect.topleft}",
+            f"Velocity: {self.velocity}",
+            f"Standing? {self.standing}",
+            f"Modules loaded: {list(self.modules.keys())}",
+            f"Collisions: {len(self.collisions)}"
+        ]
+        self.debug_text.update("\n".join(debug_content))
 
         if self.rect.top > SCREEN_DIM[1]:
-            self.rect.bottom = -50
+            self.rect.bottom = -TILE_SIZE
 
     def check_collision(self):
         self.collided = False
         collisions = []
+        grounded = False
         for tile in tiles:
+            proximity = self.rect.right in range(tile.rect.left, tile.rect.right + tile.rect.width - 1) and \
+               self.rect.left in range(tile.rect.left - tile.rect.width + 1, tile.rect.right) and \
+               tile.rect.top in range(self.rect.bottom - int(self.velocity.y/5), self.rect.bottom + 1) and \
+               tile.neighbors["up"] is None
+
             if self.rect.colliderect(tile.rect):
                 collisions.append(tile)
-
+            if proximity and not grounded:
+                grounded = True
+        
+        if grounded: self.velocity.y = 0
+        self.standing = grounded
         self.collisions = collisions
         
     def handle_collision(self):
-
         self.check_collision()
         tiles = self.collisions
         for tile in tiles:
-            offset_y = tile.rect.top - self.rect.bottom
-
-            if self.velocity.y > 0 and tile.neighbors["up"] is None:
+            offset_y = min(abs(tile.rect.top - self.rect.bottom), abs(tile.rect.bottom - self.rect.top))
+            offset_x = min(abs(tile.rect.left - self.rect.right), abs(tile.rect.right - self.rect.left))
+            plr_over_tile = tile.rect.top > self.rect.top
+            if self.velocity.y > 0 and tile.neighbors["up"] is None and offset_y < TILE_SIZE/5 and plr_over_tile:
                 self.rect.y -= offset_y
                 self.rect.bottom = tile.rect.top
                 self.velocity.y = 0
-                self.state == "standing"
-            elif self.velocity.y < 0:
-                self.rect.top = tile.rect.top
+            elif self.velocity.y < 0 and tile.neighbors["down"] is None and offset_y < TILE_SIZE/5 and not plr_over_tile:
+                self.rect.top = tile.rect.bottom
                 self.velocity.y = 0
-                self.state == "airborne"
-
-        self.check_collision()
-        tiles = self.collisions
-        for tile in tiles:
-            offset_x = min(abs(tile.rect.left - self.rect.right), abs(tile.rect.right - self.rect.left))
             if self.velocity.x > 0 and tile.neighbors["left"] is None:
                 self.rect.right -= offset_x
                 self.velocity.x = 0
-                self.state == "airborne"
             elif self.velocity.x < 0 and tile.neighbors["right"] is None:
                 self.rect.left += offset_x
                 self.velocity.x = 0
-                self.state == "airborne"
