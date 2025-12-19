@@ -1,6 +1,5 @@
 import pygame
 from modules.module import Module
-from typing import List
 
 entities = pygame.sprite.Group()
 
@@ -8,6 +7,7 @@ class Entity(pygame.sprite.Sprite):
 
     def __init__(self, pos:pygame.math.Vector2=pygame.math.Vector2(0,0), *modules:Module):
         super().__init__()
+        entities.add(self)    
         self.image = pygame.Surface((50,50))
         self.image.fill("red")
         self.rect = self.image.get_rect(topleft=pos)
@@ -31,6 +31,9 @@ class Entity(pygame.sprite.Sprite):
 
     def update(self):
         self.pos = self.rect.topleft
+
+        for module in self.modules:
+            module.update()
 
     def on_collide(self):
         pass

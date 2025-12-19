@@ -12,9 +12,7 @@ class Player(Entity):
     Vec2 = pygame.math.Vector2
     def __init__(self, position:Vec2=Vec2(0,0)):
         super().__init__()
-        entities.add(self)
 
-        self.modules = {}
         self.debug_text = TextBox(font="debug",content="", pos=(0,0))
         self.rect.topleft = position
 
@@ -57,7 +55,7 @@ class Player(Entity):
         self.handle_collision()
 
         debug_content = [
-            f"Position: POS:{self.rect.topleft}",
+            f"Position: {self.rect.topleft}",
             f"Velocity: {self.velocity}",
             f"Standing? {self.standing}",
             f"Modules loaded: {list(self.modules.keys())}",
@@ -79,6 +77,7 @@ class Player(Entity):
                tile.neighbors["up"] is None
 
             if self.rect.colliderect(tile.rect):
+                tile.on_collide()
                 collisions.append(tile)
             if proximity and not grounded:
                 grounded = True
@@ -91,6 +90,8 @@ class Player(Entity):
         self.check_collision()
         tiles = self.collisions
         for tile in tiles:
+            if tile.collidable == False:
+                continue
             offset_y = min(abs(tile.rect.top - self.rect.bottom), abs(tile.rect.bottom - self.rect.top))
             offset_x = min(abs(tile.rect.left - self.rect.right), abs(tile.rect.right - self.rect.left))
             plr_over_tile = tile.rect.top > self.rect.top
@@ -98,9 +99,10 @@ class Player(Entity):
                 self.rect.y -= offset_y
                 self.rect.bottom = tile.rect.top
                 self.velocity.y = 0
-            elif self.velocity.y < 0 and tile.neighbors["down"] is None and offset_y < TILE_SIZE/5 and not plr_over_tile:
+            elif self.velocity.y < 0 and tile.neighbors["down"] is None and offset_y < max(TILE_SIZE/5,self.velocity.y/5) and not plr_over_tile:
                 self.rect.top = tile.rect.bottom
                 self.velocity.y = 0
+            
             if self.velocity.x > 0 and tile.neighbors["left"] is None:
                 self.rect.right -= offset_x
                 self.velocity.x = 0

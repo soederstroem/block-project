@@ -3,6 +3,7 @@ from components.player import *
 from components.entity import entities
 from core.cfg import *
 from components.map import *
+from components.tile import *
 from core.utils import *
 
 pygame.init()
@@ -12,11 +13,9 @@ clk = pygame.time.Clock()
 done = False
 
 map = Map("test2")
-map.load_tiles()
 player = Player(map.plr_spawn_pos)
 bkg = pygame.transform.scale(pygame.image.load(map.bkg), SCREEN_DIM)
 
-text = TextBox("Hello!")
 
 # print(pygame.font.get_fonts())
 
@@ -40,7 +39,6 @@ while not done:
 
     tiles.draw(screen)
     entities.draw(screen)
-    text.draw(screen)
     player.debug_text.draw(screen)
 
     pygame.display.flip()

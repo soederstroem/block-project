@@ -1,8 +1,7 @@
 import pygame
 from pathlib import Path
-from components.entity import entities
-
-tiles = pygame.sprite.Group()
+from components.tile import Tile, tiles
+from modules.toggle_module import ToggleModule
 
 class Map:
 
@@ -29,17 +28,24 @@ class Map:
                 elif tiles_loaded and line != '_':
                     print(line)
                 else: continue
-        
+
         for y, line in enumerate(self.tile_data):
             for x,col in enumerate(line):
+                coord = (x*50 + self.offset.x, y*50 + self.offset.y)
                 match col:
                     case '':
                         pass
                     case '1':
-                        tile = Tile(pos=(x*50 + self.offset.x, y*50 + self.offset.y))
+                        tile = Tile(coord)
                         self.tiles[(x,y)] = tile
                     case 'p':
-                        self.plr_spawn_pos = (x*50 + self.offset.x, y*50 + self.offset.y)
+                        self.plr_spawn_pos = coord
+                    case 't':
+                        tile = Tile(coord, ToggleModule(role="t"))
+                        tile.image.fill("green")
+                    case 'T':
+                        tile = Tile(coord, ToggleModule(role="s"))
+                        tile.image.fill("green")
 
         for (gx,gy), tile in self.tiles.items():
             tile.neighbors["up"] = self.tiles.get((gx, gy-1))
@@ -51,26 +57,3 @@ class Map:
         plr.set_pos(self.plr_spawn_pos)
 
 
-class Tile(pygame.sprite.Sprite):
-
-    def __init__(self, *components, pos:pygame.math.Vector2):
-        super().__init__()
-        tiles.add(self)
-        self.components = []
-
-        for c in components:
-            self.components.add(c)
-
-        self.pos = pos
-        self.image = pygame.Surface((50,50))
-        self.image.fill("blue")
-        self.rect = self.image.get_rect()
-        
-        self.neighbors = {}
-        self.collidable = True
-
-    def update(self):
-        self.rect.topleft = self.pos
-    
-    def on_collide(self):
-        pass
